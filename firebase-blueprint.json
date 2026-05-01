@@ -24,6 +24,10 @@
         "url": { "type": "string" },
         "uploaderId": { "type": "string" },
         "views": { "type": "number" },
+        "likedBy": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "type": { "type": "string", "enum": ["video", "short"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
@@ -56,6 +60,10 @@
     "/users/{userId}": {
       "schema": "User",
       "description": "User profiles"
+    },
+    "/users/{userId}/history/{videoId}": {
+      "schema": "Video",
+      "description": "User watch history"
     },
     "/videos/{videoId}": {
       "schema": "Video",

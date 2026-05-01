@@ -22,7 +22,8 @@ service cloud.firestore {
     function isValidVideo(data) {
       return data.title is string && data.title.size() <= 200 &&
              data.uploaderId == request.auth.uid &&
-             data.createdAt is timestamp;
+             data.createdAt is timestamp &&
+             (!('likedBy' in data) || (data.likedBy is list && data.likedBy.size() <= 5000));
     }
 
     function isValidSubscription(data) {
@@ -43,12 +44,19 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidUser(request.resource.data);
       allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'email', 'photoURL', 'bio', 'updatedAt', 'createdAt']);
+                      
+      match /history/{videoId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     match /videos/{videoId} {
       allow read: if true;
       allow create: if isSignedIn() && isValidVideo(request.resource.data);
-      allow update: if isSignedIn() && resource.data.uploaderId == request.auth.uid && isValidVideo(request.resource.data);
+      allow update: if isSignedIn() && (
+        (resource.data.uploaderId == request.auth.uid && isValidVideo(request.resource.data)) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy']) && request.resource.data.likedBy is list && request.resource.data.likedBy.size() <= 5000)
+      );
       allow delete: if isSignedIn() && resource.data.uploaderId == request.auth.uid;
     }
 
